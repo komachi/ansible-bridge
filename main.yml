@@ -1,0 +1,44 @@
+
+---
+- hosts: all
+  become: True
+  collections:
+    - devsec.hardening
+    - debops.debops
+    - debops.roles01
+    - debops.roles02
+    - debops.roles03
+    - community.general
+    - ansible.posix
+  roles:
+    - core
+    - ssh_hardening
+    - remote_keyring
+    - apt_preferences
+    - apt
+    - shadowsocks
+    - firewall
+    - ntp
+    - tor
+    - unattended_upgrades
+    - os_hardening
+  vars:
+    tor_bridge_port: 80
+    shadowsocks_port: 443
+    # dev-sec
+    sftp_enabled: true
+    sysctl_overwrite:
+      net.ipv6.conf.all.disable_ipv6: 0
+      net.ipv6.conf.all.forwarding: 1
+      net.ipv4.conf.all.forwarding: 1
+      net.ipv4.ip_forward: 1
+      net.ipv6.ip_forward: 1
+    ufw_manage_defaults: False
+    # debops vars
+    ntp__daemon_enabled: True
+    ntp__daemon: 'openntpd'
+    ntp__timezone: 'Etc/UTC'
+    apt__install_recommends: False
+    apt__install_suggests: False
+    apt__repositories:
+      - repo: 'deb [signed-by=/usr/share/keyrings/deb.torproject.org-keyring.gpg] https://deb.torproject.org/torproject.org {{ ansible_distribution_release }} main'

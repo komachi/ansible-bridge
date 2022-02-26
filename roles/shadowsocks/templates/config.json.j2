@@ -1,0 +1,9 @@
+{
+    "server": ["::0","0.0.0.0"],
+    "server_port": {{ shadowsocks_port }},
+    "encryption_method": "chacha20-ietf-poly1305",
+    "password": "{{ lookup('password', 'credentials/shadowsocks length=30') }}",
+    "plugin": "v2ray-plugin",
+    "timeout": 86400,
+    "plugin-opts": "server"
+}

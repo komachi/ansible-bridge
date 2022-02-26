@@ -1,0 +1,76 @@
+---
+
+- name: Install Tor
+  package:
+    name: "{{item}}"
+    state: 'present'
+  with_items:
+    - tor
+    - deb.torproject.org-keyring
+    - obfs4proxy
+
+- name: Allow obfs4proxy to bind to priveleged ports
+  capabilities:
+    path: /usr/bin/obfs4proxy
+    capability: cap_net_bind_service=+ep
+    state: present
+
+- name: Ensures /etc/systemd/system/tor@.service.d exists
+  file:
+    path: "/etc/systemd/system/tor@.service.d"
+    state: directory
+
+- name: Add tor unit override
+  copy:
+    src: 'systemd/overrides.conf'
+    dest: "/etc/systemd/system/tor@.service.d/overrides.conf"
+    mode: '0640'
+
+- name: Configure Tor
+  template:
+    src: 'etc/tor/torrc.j2'
+    dest: '/etc/tor/torrc'
+    owner: 'debian-tor'
+    group: 'debian-tor'
+    mode: '0640'
+  register: torconfigure
+
+- name: Enable Tor service
+  systemd:
+    name: tor@default
+    enabled: yes
+
+- name: Restart Tor
+  when: torconfigure.changed
+  systemd:
+    name: tor@default
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+
+- name: Create Tor bridge instance
+  command: tor-instance-create bridge
+  args: 
+    creates: '/etc/tor/instances/bridge/torrc'
+
+- name: Configure Tor@bridge
+  template:
+    src: 'etc/tor/instances/bridge/torrc.j2'
+    dest: '/etc/tor/instances/bridge/torrc'
+    owner: '_tor-bridge'
+    group: '_tor-bridge'
+    mode: '0640'
+  register: torbridgeconfigure
+
+- name: Enable Tor@bridge service
+  systemd:
+    name: tor@bridge
+    enabled: yes
+
+- name: Restart Tor@bridge
+  when: torbridgeconfigure.changed
+  systemd:
+    name: tor@bridge
+    state: restarted
+    daemon_reload: yes
+    enabled: yes

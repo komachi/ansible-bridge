@@ -1,0 +1,12 @@
+- name: Ensures /usr/share/keyrings exists
+  file:
+    path: "/usr/share/keyrings"
+    state: directory
+
+- name: Copy gpg keys to /usr/share/keyrings
+  copy:
+    src: '{{ item }}'
+    dest: "/usr/share/keyrings/{{ item }}"
+    mode: '0644'
+  loop:
+    - deb.torproject.org-keyring.gpg

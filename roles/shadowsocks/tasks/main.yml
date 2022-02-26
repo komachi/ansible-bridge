@@ -1,0 +1,19 @@
+
+- name: Install shadowsocks-libev with v2ray
+  apt:
+    name:
+      - shadowsocks-libev
+      - shadowsocks-v2ray-plugin
+    state: present
+
+- name: Configure shadowsocks
+  template:
+    src: "config.json.j2"
+    dest: '/etc/shadowsocks-libev/config.json'
+    mode: 0640
+
+- name: Enable shadowsocks service
+  systemd:
+    name: shadowsocks-libev
+    enabled: yes
+    state: started

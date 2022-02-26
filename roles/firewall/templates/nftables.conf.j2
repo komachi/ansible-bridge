@@ -1,0 +1,46 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    iif lo accept comment "Accept any localhost traffic"
+    ct state invalid drop comment "Drop invalid connections"
+    ct state established,related accept comment "Accept traffic originated from us"
+
+    iif != lo ip daddr 127.0.0.1/8 drop comment "drop connections to loopback not coming from loopback"
+    iif != lo ip6 daddr ::1/128 drop comment "drop connections to loopback not coming from loopback"
+
+    ip6 nexthdr icmpv6 icmpv6 type { nd-neighbor-solicit, echo-request, nd-router-advert, nd-neighbor-advert } limit rate 10/second accept
+    ip protocol icmp icmp type { destination-unreachable, router-solicitation, router-advertisement, time-exceeded, parameter-problem } limit rate 10/second accept
+
+    tcp dport ssh accept comment "Accept SSH"
+    tcp dport {{ tor_bridge_port }} accept comment "Tor bridge"
+    tcp dport {{ shadowsocks_port }} accept comment "shadowsocks tcp"
+    udp dport {{ shadowsocks_port }} accept comment "shadowsocks udp"
+  }
+
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    mark 1 accept
+  }
+
+  chain output {
+    type filter hook output priority 0; policy accept;
+  }
+}
+
+table inet nat {
+  chain prerouting {
+    type nat hook prerouting priority -100;
+
+    # CT INVALID
+    ct state invalid drop
+
+    # TCP SYN (CT NEW)
+    tcp flags & (fin|syn|rst|ack) != syn \
+      ct state new \
+      drop
+  }
+}

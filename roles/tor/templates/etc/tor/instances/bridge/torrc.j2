@@ -1,0 +1,9 @@
+SOCKSPort 0
+ORPort 8081
+AssumeReachable 1
+BridgeRelay 1
+ServerTransportPlugin obfs4 exec /usr/bin/obfs4proxy
+ServerTransportListenAddr obfs4 0.0.0.0:{{ tor_bridge_port }}
+ExtORPort auto
+PublishServerDescriptor 0
+ExitPolicy reject *:*
